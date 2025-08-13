@@ -8,6 +8,10 @@ import LoginScreen from './components/LoginScreen';
 import UserProfile from './components/UserProfile';
 import Logo from './components/Logo';
 import DonationButton from './components/DonationButton';
+import BankBalance from './components/BankBalance';
+import BankBalanceSummary from './components/BankBalanceSummary';
+import { fetchAndParseBankData } from './services/bankBalanceService';
+import { BankAccount, BankBalanceSummary as BankSummaryType } from './types/bankTypes';
 
 // Constants
 // const SHEET_ID = import.meta.env.VITE_GOOGLE_SHEET_ID;
@@ -261,13 +265,46 @@ const renderActiveShape = (props: any) => {
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirmButtonText = "Delete" }: { isOpen: boolean, onClose: () => void, onConfirm: () => void, title: string, message: string, confirmButtonText?: string }) => { 
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50 p-4 transition-opacity duration-300 ease-in-out">
-            <div className="bg-white dark:bg-slate-800 p-7 rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 ease-in-out scale-95 group-hover:scale-100">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-[120] p-4 sm:p-6 transition-opacity duration-300 ease-in-out overflow-y-auto">
+            <div className="bg-white dark:bg-slate-800 p-7 rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 ease-in-out scale-95 group-hover:scale-100 max-h-[90vh] overflow-y-auto">
                 <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">{title}</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-8">{message}</p>
                 <div className="flex justify-end gap-4">
                     <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 focus:ring-4 focus:outline-none focus:ring-slate-200 dark:focus:ring-slate-700 transition-colors">Batal</button>
                     <button onClick={onConfirm} className={`px-5 py-2.5 text-sm font-medium text-white rounded-lg focus:ring-4 focus:outline-none transition-colors ${confirmButtonText === "Hapus Permanen" ? "bg-red-600 hover:bg-red-700 focus:ring-red-300" : (confirmButtonText === "Simpan Perubahan" ? "bg-sky-600 hover:bg-sky-700 focus:ring-sky-300" : "bg-amber-500 hover:bg-amber-600 focus:ring-amber-300")}`}>{confirmButtonText}</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Minimal transaction details modal
+const TransactionDetailsModal = ({ isOpen, onClose, transaction }: { isOpen: boolean, onClose: () => void, transaction: AppTransaction | null }) => {
+    if (!isOpen || !transaction) return null;
+    const amountText = `${transaction.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(transaction.amount))}`;
+    const typeText = transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-[120] p-4 sm:p-6 overflow-y-auto" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 p-7 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Info className={`w-6 h-6 ${transaction.type === 'income' ? 'text-emerald-600' : 'text-red-600'}`} />
+                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Detail Transaksi</h3>
+                    </div>
+                    <button onClick={onClose} className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"><XCircle size={20} /></button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div className="flex justify-between sm:justify-start sm:gap-4"><span className="text-slate-500 dark:text-slate-400">Tanggal</span><span className="text-slate-800 dark:text-slate-200">{transaction.date || 'N/A'}</span></div>
+                    <div className="flex justify-between sm:justify-start sm:gap-4"><span className="text-slate-500 dark:text-slate-400">Kategori</span><span className="text-slate-800 dark:text-slate-200">{transaction.category || 'N/A'}</span></div>
+                    <div className="flex justify-between sm:justify-start sm:gap-4"><span className="text-slate-500 dark:text-slate-400">Tipe</span><span className={transaction.type === 'income' ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-red-600 dark:text-red-400 font-medium'}>{typeText}</span></div>
+                    <div className="flex justify-between sm:justify-start sm:gap-4"><span className="text-slate-500 dark:text-slate-400">Jumlah</span><span className={transaction.type === 'income' ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>{amountText}</span></div>
+                    {'Bank' in transaction && <div className="flex justify-between sm:justify-start sm:gap-4"><span className="text-slate-500 dark:text-slate-400">Bank</span><span className="text-slate-800 dark:text-slate-200">{(transaction as any)['Bank'] || '—'}</span></div>}
+                    {'Timestamp' in transaction && <div className="flex justify-between sm:justify-start sm:gap-4"><span className="text-slate-500 dark:text-slate-400">Timestamp</span><span className="text-slate-800 dark:text-slate-200">{(transaction as any).Timestamp || '—'}</span></div>}
+                    {'rowIndex' in transaction && <div className="flex justify-between sm:justify-start sm:gap-4"><span className="text-slate-500 dark:text-slate-400">Row</span><span className="text-slate-800 dark:text-slate-200">{(transaction as any).rowIndex}</span></div>}
+                    <div className="sm:col-span-2 flex justify-between sm:justify-start sm:gap-4"><span className="text-slate-500 dark:text-slate-400">Deskripsi</span><span className="text-slate-800 dark:text-slate-200 text-right sm:text-left break-words whitespace-pre-wrap" title={String(transaction.description || 'N/A')}>{transaction.description || 'N/A'}</span></div>
+                </div>
+                <div className="flex justify-end mt-6">
+                    <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 focus:ring-4 focus:outline-none focus:ring-slate-200 dark:focus:ring-slate-700 transition-colors">Tutup</button>
                 </div>
             </div>
         </div>
@@ -443,6 +480,7 @@ const Dashboard = () => {
     
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [transactionToDelete, setTransactionToDelete] = useState<AppTransaction | null>(null);
+    const [selectedTransaction, setSelectedTransaction] = useState<AppTransaction | null>(null);
     
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info' as 'info' | 'success' | 'error' });
     
@@ -450,17 +488,49 @@ const Dashboard = () => {
     const [isGeminiLoading, setIsGeminiLoading] = useState(false);
     const [geminiError, setGeminiError] = useState<string | null>(null);
 
-    const [activeView, setActiveView] = useState<'category' | 'daily'>('category'); 
+    const [activeView, setActiveView] = useState<'category' | 'daily'>('category');
     const [selectedDailyDetailsDate, setSelectedDailyDetailsDate] = useState<string | null>(null);
+
+    // Bank balance state
+    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+    const [bankSummary, setBankSummary] = useState<BankSummaryType>({
+        totalBalance: 0,
+        totalAccounts: 0,
+        accountsByType: {},
+        accountsByBank: {}
+    });
+    const [bankLoading, setBankLoading] = useState(true);
+    const [bankError, setBankError] = useState<string | null>(null);
 
 
     const ITEMS_PER_PAGE = 10;
 
-    const showNotification = (message: string, type: 'info' | 'success' | 'error' = 'info', duration = 3000) => { 
+    const showNotification = (message: string, type: 'info' | 'success' | 'error' = 'info', duration = 3000) => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: '', type: 'info' }), duration);
     };
-    const fetchData = async (isRefresh = false) => { 
+
+    const fetchBankData = async (isRefresh = false) => {
+        setBankLoading(true); setBankError(null);
+        try {
+            const sheetId = getGoogleSheetId();
+            console.log('Fetching bank data with Google Sheet ID:', sheetId);
+            const { data: fetchedBankData, error: bankFetchError, summary } = await fetchAndParseBankData(sheetId, getBackendApiUrl());
+            if (bankFetchError) throw new Error(bankFetchError);
+            setBankAccounts(fetchedBankData);
+            setBankSummary(summary);
+            if(isRefresh) showNotification("Data saldo bank berhasil disegarkan!", "success");
+        } catch (e: any) {
+            setBankError(`Gagal mengambil data saldo bank: ${e.message}`);
+            setBankAccounts([]);
+            setBankSummary({ totalBalance: 0, totalAccounts: 0, accountsByType: {}, accountsByBank: {} });
+            console.error("Bank Data Fetch Error:", e);
+            if(isRefresh) showNotification(`Error menyegarkan data bank: ${e.message}`, "error", 5000);
+        }
+        setBankLoading(false);
+    };
+
+    const fetchData = async (isRefresh = false) => {
         setIsLoading(true); setError(null);
         try {
             const sheetId = getGoogleSheetId();
@@ -469,20 +539,27 @@ const Dashboard = () => {
             if (fetchError) throw new Error(fetchError);
             setRawData(fetchedData); setLastRefreshed(new Date());
             if (fetchedData.length > 0) {
-                const tempMonthlyCategorized = processMonthlyCategories(fetchedData); 
-                const monthKeys = Object.keys(tempMonthlyCategorized).sort((a,b) => new Date(b).getTime() - new Date(a).getTime()); 
+                const tempMonthlyCategorized = processMonthlyCategories(fetchedData);
+                const monthKeys = Object.keys(tempMonthlyCategorized).sort((a,b) => new Date(b).getTime() - new Date(a).getTime());
                 if (monthKeys.length > 0 && (!selectedMonthKey || isRefresh)) {
                     setSelectedMonthKey(monthKeys[0]);
-                    setSelectedDailyDetailsDate(null); 
+                    setSelectedDailyDetailsDate(null);
                 }
             }
-            if(isRefresh) showNotification("Data berhasil disegarkan dari Google Sheet!", "success");
+            if(isRefresh) showNotification("Data transaksi berhasil disegarkan dari Google Sheet!", "success");
         } catch (e: any) {
-            setError(`Gagal mengambil/memproses data: ${e.message}`); setRawData([]); 
+            setError(`Gagal mengambil/memproses data: ${e.message}`); setRawData([]);
             console.error("Fetch/Processing Error in App component:", e);
             showNotification(`Error menyegarkan data: ${e.message}`, "error", 5000);
         }
         setIsLoading(false);
+    };
+
+    const fetchAllData = async (isRefresh = false) => {
+        await Promise.all([
+            fetchData(isRefresh),
+            fetchBankData(isRefresh)
+        ]);
     };
     
     const processMonthlyCategories = (dataToProcess: AppTransaction[]) => { 
@@ -533,7 +610,7 @@ const Dashboard = () => {
     };
 
     // Effect to fetch data when user configuration is ready
-    useEffect(() => { 
+    useEffect(() => {
         // Don't fetch if config is still loading
         if (configLoading) {
             console.log('User configuration still loading...');
@@ -543,11 +620,13 @@ const Dashboard = () => {
         const sheetId = getGoogleSheetId();
         if (sheetId) {
             console.log('User configuration ready, fetching data with sheet ID:', sheetId);
-            fetchData(); 
+            fetchAllData();
         } else {
             console.log('No Google Sheet ID configured, showing empty state');
             setIsLoading(false);
+            setBankLoading(false);
             setRawData([]);
+            setBankAccounts([]);
         }
     }, [configLoading, config?.google_sheet_id]); // Re-fetch when config loading is done or sheet ID changes
 
@@ -612,8 +691,8 @@ const Dashboard = () => {
     const paginatedData = useMemo(() => filteredAndSortedData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE), [filteredAndSortedData, currentPage]);
     const totalPages = Math.ceil(filteredAndSortedData.length / ITEMS_PER_PAGE);
     const handleRefresh = () => {
-        fetchData(true);
-        setSelectedDailyDetailsDate(null); 
+        fetchAllData(true);
+        setSelectedDailyDetailsDate(null);
     };
     
     const handleDeleteRequest = (transaction: AppTransaction) => { 
@@ -708,7 +787,7 @@ const Dashboard = () => {
     const currentMonthDailyChartData = dailyBreakdown[selectedMonthKey]?.dailyEntries || [];
 
 
-    if (isLoading && rawData.length === 0) { 
+    if ((isLoading || bankLoading) && rawData.length === 0 && bankAccounts.length === 0) {
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-4 sm:p-6 md:p-8 font-sans">
                 {notification.show && <div className={`fixed top-5 right-5 p-4 rounded-lg shadow-md text-white z-[100] ${notification.type === 'success' ? 'bg-emerald-500' : notification.type === 'error' ? 'bg-red-500' : 'bg-sky-500'}`}>{notification.message}</div>}
@@ -749,7 +828,7 @@ const Dashboard = () => {
         ); 
     }
     
-    if (error && rawData.length === 0) { 
+    if ((error || bankError) && rawData.length === 0 && bankAccounts.length === 0) {
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-4 sm:p-6 md:p-8 font-sans">
                 {notification.show && <div className={`fixed top-5 right-5 p-4 rounded-lg shadow-md text-white z-[100] ${notification.type === 'success' ? 'bg-emerald-500' : notification.type === 'error' ? 'bg-red-500' : 'bg-sky-500'}`}>{notification.message}</div>}
@@ -797,7 +876,7 @@ const Dashboard = () => {
         ); 
     }
     
-    if (!isLoading && rawData.length === 0 && !error) { 
+    if (!isLoading && !bankLoading && rawData.length === 0 && bankAccounts.length === 0 && !error && !bankError) {
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-4 sm:p-6 md:p-8 font-sans">
                 {notification.show && <div className={`fixed top-5 right-5 p-4 rounded-lg shadow-md text-white z-[100] ${notification.type === 'success' ? 'bg-emerald-500' : notification.type === 'error' ? 'bg-red-500' : 'bg-sky-500'}`}>{notification.message}</div>}
@@ -913,6 +992,7 @@ const Dashboard = () => {
                 message="Apakah Anda yakin ingin menghapus transaksi ini secara permanen dari Google Sheet melalui API backend? Tindakan ini tidak dapat dibatalkan."
                 confirmButtonText="Hapus Permanen"
             />
+            <TransactionDetailsModal isOpen={!!selectedTransaction} onClose={() => setSelectedTransaction(null)} transaction={selectedTransaction} />
             
             <header className="sticky top-0 z-50 mb-6 flex flex-col sm:flex-row justify-between items-center bg-slate-100 dark:bg-slate-900 pt-safe pb-4 px-4 sm:px-6 md:px-8 -mx-4 sm:-mx-6 md:-mx-8 sm:relative sm:top-auto sm:z-auto sm:bg-transparent sm:pt-0 sm:pb-0 sm:px-0 sm:-mx-0">
                 <div className="flex items-center gap-3 sm:gap-4">
@@ -938,7 +1018,14 @@ const Dashboard = () => {
                     {lastRefreshed && !isLoading && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Terakhir disegarkan: {lastRefreshed.toLocaleTimeString('id-ID')}</p>}
                 </div>
             </header>
-            {error && rawData.length > 0 && <div className="mb-4 p-4 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-200 rounded-md text-sm"><strong>Peringatan saat memuat data:</strong> {error} Data yang ditampilkan mungkin tidak lengkap atau usang.</div>}
+            {(error || bankError) && (rawData.length > 0 || bankAccounts.length > 0) && (
+                <div className="mb-4 p-4 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-200 rounded-md text-sm">
+                    <strong>Peringatan saat memuat data:</strong>
+                    {error && <div>Transaksi: {error}</div>}
+                    {bankError && <div>Saldo Bank: {bankError}</div>}
+                    <div className="mt-1">Data yang ditampilkan mungkin tidak lengkap atau usang.</div>
+                </div>
+            )}
 
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <SummaryCard title="Total Pemasukan" value={totalIncome} icon={<ArrowUpCircle />} color="text-emerald-500" details="Semua pemasukan tercatat." />
@@ -946,7 +1033,13 @@ const Dashboard = () => {
                 <SummaryCard title="Saldo Bersih" value={netBalance} icon={<DollarSign />} color={netBalance >= 0 ? "text-sky-500" : "text-amber-500"} details="Selisih antara pemasukan dan pengeluaran." />
             </section>
 
-            <section className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+            {/* Bank Balance Summary Section */}
+            <BankBalanceSummary summary={bankSummary} loading={bankLoading} />
+
+            {/* Bank Accounts Section */}
+            <BankBalance accounts={bankAccounts} loading={bankLoading} error={bankError} />
+
+            <section className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8 mt-8">
                 <div className="lg:col-span-3 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
                     <h2 className="text-2xl font-semibold text-slate-700 dark:text-slate-200 mb-1">Tren Bulanan</h2><p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Pemasukan vs. Pengeluaran Seiring Waktu</p>
                     {monthlyTrends.length > 0 ? <ResponsiveContainer width="100%" height={400}><LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" /><XAxis dataKey="name" tick={{ fill: 'var(--chart-text-secondary)', fontSize: 12 }} /><YAxis tickFormatter={(value: any) => formatCurrency(Number(value))} tick={{ fill: 'var(--chart-text-secondary)', fontSize: 12 }} /><Tooltip formatter={(value) => formatCurrency(Number(value))} labelStyle={{ color: 'var(--tooltip-text)' }} itemStyle={{ color: 'var(--tooltip-text)' }} contentStyle={{ backgroundColor: 'var(--tooltip-bg)', border: '1px solid var(--tooltip-border)', borderRadius: '8px', color: 'var(--tooltip-text)' }} /><Legend wrapperStyle={{ paddingTop: '20px', color: 'var(--legend-text)' }} /><Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Pemasukan" /><Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Pengeluaran" /></LineChart></ResponsiveContainer> : <p className="text-slate-500 dark:text-slate-400 text-center py-10">Data tidak cukup untuk tren bulanan.</p>}
@@ -1126,7 +1219,7 @@ const Dashboard = () => {
                 {/* Card-based Transaction List */}
                 <div className="space-y-3">
                     {paginatedData.map((item) => (
-                        <div key={item.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600 hover:shadow-md transition-all duration-200">
+                        <div key={item.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600 hover:shadow-md transition-all duration-200 cursor-pointer" onClick={() => setSelectedTransaction(item)}>
                             <div className="flex items-center justify-between">
                                 {/* Left side - Transaction Icon and Details */}
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1176,7 +1269,7 @@ const Dashboard = () => {
                                             
                                             {/* Delete Button */}
                                             <button 
-                                                onClick={() => handleDeleteRequest(item)} 
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteRequest(item); }} 
                                                 className="text-slate-400 hover:text-red-500 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors ml-2" 
                                                 title="Hapus Transaksi Permanen"
                                             >
