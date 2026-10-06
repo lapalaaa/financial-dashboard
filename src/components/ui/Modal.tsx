@@ -17,7 +17,8 @@ const widths = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl' }
 
 /**
  * Diálogo accesible. En celular se muestra como panel inferior (bottom sheet);
- * desde `sm` en adelante, centrado.
+ * desde `sm` en adelante, centrado. Para enfocar un campo al abrir, marcarlo con
+ * `data-autofocus` (no `autoFocus`, que se adelanta al registro del foco previo).
  */
 export function Modal({ open, onClose, title, description, children, footer, size = 'md' }: ModalProps) {
   const titleId = useId()
@@ -37,7 +38,9 @@ export function Modal({ open, onClose, title, description, children, footer, siz
     document.addEventListener('keydown', onKey)
     const { overflow } = document.body.style
     document.body.style.overflow = 'hidden'
-    panelRef.current?.focus()
+    // Enfoca el campo marcado con data-autofocus, o el panel.
+    const target = panelRef.current?.querySelector<HTMLElement>('[data-autofocus]') ?? panelRef.current
+    target?.focus()
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = overflow

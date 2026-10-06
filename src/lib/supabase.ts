@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '../types/database'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -13,7 +14,7 @@ export const isSupabaseConfigured = Boolean(url && anonKey && /^https?:\/\//.tes
 export const canUseDevSession = import.meta.env.DEV && !isSupabaseConfigured
 
 // Con valores de relleno el cliente se crea sin lanzar errores; no se usa si no está configurado.
-export const supabase = createClient(
+export const supabase = createClient<Database>(
   isSupabaseConfigured ? url! : 'http://localhost:54321',
   isSupabaseConfigured ? anonKey! : 'no-configurado',
 )

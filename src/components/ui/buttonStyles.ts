@@ -1,7 +1,7 @@
 import { cn } from '../../lib/cn'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm'
 
 const base =
   'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors ' +
@@ -19,6 +19,7 @@ const sizes: Record<ButtonSize, string> = {
   md: 'h-10 px-4 text-sm',
   lg: 'h-12 px-5 text-base',
   icon: 'h-10 w-10',
+  'icon-sm': 'h-8 w-8',
 }
 
 /** Clases de botón reutilizables (también para <Link> con aspecto de botón). */
