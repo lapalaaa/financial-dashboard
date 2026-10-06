@@ -81,10 +81,6 @@ jspm_packages/
 .nuxt
 dist
 
-# Gatsby files
-.cache/
-public
-
 # Storybook build outputs
 .out
 .storybook-out
@@ -92,23 +88,6 @@ public
 # Temporary folders
 tmp/
 temp/
-
-# Android
-android/app/build/
-android/build/
-android/.gradle/
-android/local.properties
-android/app/release/
-android/app/debug/
-android/gradle/
-android/gradlew
-android/gradlew.bat
-*.apk
-*.aab
-
-# Capacitor
-ios/
-android/app/src/main/assets/public/
 
 # Local Netlify folder
 .netlify

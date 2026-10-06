@@ -1,277 +1,54 @@
-# Financial Dashboard
+# Mi Aplicación
 
-A modern React-based financial dashboard that integrates with Google Sheets for data storage and provides AI-powered financial insights using Google's Gemini API.
+Aplicación web personal con dos módulos:
 
-## Support This Project
+- **Productos**: consulta de productos en dos planillas de Google Sheets (solo lectura) y registro del stock físico.
+- **Finanzas**: registro de gastos por categoría y cuenta.
 
-<p>
-  <a href="https://saweria.co/HiddenCyber">
-    <img src="https://asset.hiddencyber.online/donate-buttons/saweria.svg" alt="Donasi via Saweria" height="56">
-  </a>
+Funciona en PC y celular (web responsive).
 
-  <a href="https://support.hiddencyber.online">
-    <img src="https://asset.hiddencyber.online/donate-buttons/qris.svg" alt="Dukungan via QRIS" height="56">
-  </a>
+## Stack
 
-  <a href="https://ko-fi.com/hiddencyber">
-    <img src="https://asset.hiddencyber.online/donate-buttons/ko-fi.svg" alt="Ko-fi untuk HiddenCyber" height="56">
-  </a>
+React 18 · TypeScript · Vite · Tailwind CSS · React Router · Recharts · Supabase
 
-  <a href="https://paypal.me/wimboro">
-    <img src="https://asset.hiddencyber.online/donate-buttons/paypal.svg" alt="Donasi via PayPal" height="56">
-  </a>
-</p>
+## Puesta en marcha
 
-## Features
-
-- 📊 **Financial Data Visualization**: Interactive charts and graphs for income/expense tracking
-- 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
-- 🌙 **Dark Mode Support**: Toggle between light and dark themes
-- 📈 **Monthly Trends**: Track financial patterns over time
-- 🏷️ **Category Breakdown**: Organize transactions by categories
-- 📅 **Daily Analysis**: View detailed daily transaction breakdowns
-- 🤖 **AI Insights**: Get spending recommendations from Google Gemini AI
-- 🔐 **User Authentication**: Secure login with Supabase
-- 📝 **Real-time Data**: Sync with Google Sheets for live updates
-
-## Tech Stack
-
-- **Frontend**: React, TypeScript, Tailwind CSS
-- **Charts**: Recharts
-- **Authentication**: Supabase
-- **Data Source**: Google Sheets
-- **AI**: Google Gemini API
-- **Build Tool**: Vite
-
-## Environment Setup
-
-### Required Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```bash
-# Supabase Configuration
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Google Sheets Configuration
-VITE_GOOGLE_SHEET_ID=your_google_sheet_id
-
-# Gemini AI API Configuration
-VITE_GEMINI_API_KEY=your_gemini_api_key
-
-# Backend API Configuration
-VITE_BACKEND_API_URL_LOCALHOST=http://localhost:4000/api
-VITE_BACKEND_API_URL_PRODUCTION=your_production_backend_url
-```
-
-### Getting the Required Keys
-
-#### 1. Supabase Setup
-1. Go to [Supabase](https://supabase.com/) and create a new project
-2. Navigate to Settings → API
-3. Copy the Project URL and anon public key
-4. See `SUPABASE_SETUP.md` for detailed authentication setup
-
-#### 2. Google Sheets Setup
-1. Create a Google Sheet with columns: Date, Description, Category, Amount
-2. Make the sheet publicly viewable (Share → Anyone with the link can view)
-3. Extract the Sheet ID from the URL: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit`
-
-#### 3. Google Gemini API Setup
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Create a new API key
-3. Copy the generated API key
-
-#### 4. Backend API Setup
-- For localhost: Use `http://localhost:4000/api`
-- For production: Deploy your backend and use the production URL
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd financial-dashboard
-```
-
-2. Install dependencies:
 ```bash
 npm install
-```
-
-3. Copy environment variables:
-```bash
-cp .env.example .env
-```
-
-4. Fill in your environment variables in the `.env` file
-
-## Google Sheets Data Format
-
-Your Google Sheet should have the following columns:
-
-| Date | Description | Category | Amount | User ID | Timestamp |
-|------|-------------|----------|---------|---------|-----------|
-| 2024-01-15 | Coffee | Food | -5000 | user123 | 2024-01-15T10:30:00Z |
-| 2024-01-15 | Salary | Income | 5000000 | user123 | 2024-01-15T09:00:00Z |
-
-**Notes:**
-- **Date**: Format as YYYY-MM-DD
-- **Amount**: Positive numbers for income, negative for expenses
-- **Category**: Any string (e.g., "Food", "Transportation", "Salary")
-- **User ID**: For multi-user support (optional)
-- **Timestamp**: ISO format timestamp (optional)
-
-## Key Features Explained
-
-### AI-Powered Insights
-The dashboard uses Google's Gemini AI to analyze your spending patterns and provide personalized financial advice. Click the "✨ Dapatkan Wawasan Pengeluaran" button to get insights about your monthly expenses.
-
-### Dark Mode
-Toggle between light and dark themes using the moon/sun icon in the header.
-
-### Interactive Charts
-- **Monthly Trends**: Line chart showing income vs expenses over time
-- **Category Breakdown**: Pie chart showing expense distribution by category
-- **Daily Analysis**: Detailed daily transaction views
-
-### Data Management
-- **Real-time Sync**: Automatically fetches latest data from Google Sheets
-- **Search & Filter**: Find specific transactions quickly
-- **Delete Transactions**: Remove transactions (requires backend API)
-
-## Build Instructions
-
-### Web Application Build
-
-#### Development Build
-```bash
-# Start development server with hot reload
+cp .env.example .env   # completar con los datos del proyecto de Supabase
 npm run dev
 ```
-The app will be available at `http://localhost:5173`
 
-#### Production Build
-```bash
-# Build for production
-npm run build
+Sin `.env`, `npm run dev` permite entrar en un **modo desarrollo** local para recorrer la interfaz
+(no disponible en el build de producción).
 
-# Preview the production build locally
-npm run preview
-```
-The built files will be in the `dist/` directory.
+## Scripts
 
-#### Build Verification
-```bash
-# Run linting before build
-npm run lint
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo en `http://localhost:5173` |
+| `npm run build` | Chequeo de tipos + build de producción en `dist/` |
+| `npm run preview` | Sirve el build de producción |
+| `npm run lint` | ESLint |
 
-# Type checking
-npx tsc --noEmit
-```
-
-### Android Application Build
-
-This project supports Android builds using Capacitor. Follow these steps to build the Android app:
-
-#### Prerequisites
-- **Android Studio**: Install from [developer.android.com](https://developer.android.com/studio)
-- **Java Development Kit (JDK)**: Version 11 or higher
-- **Android SDK**: API level 22 or higher
-- **Node.js**: Version 16 or higher
-
-#### Android Build Steps
-
-1. **Install Capacitor CLI** (if not already installed):
-```bash
-npm install -g @capacitor/cli
-```
-
-2. **Build the web assets**:
-```bash
-npm run build
-```
-
-3. **Sync with Android platform**:
-```bash
-npx cap sync android
-```
-
-4. **Open in Android Studio**:
-```bash
-npx cap open android
-```
-
-5. **Build APK in Android Studio**:
-   - Click on **Build** → **Build Bundle(s) / APK(s)** → **Build APK(s)**
-   - Or use Gradle command: `./gradlew assembleDebug`
-
-6. **Build Release APK**:
-```bash
-cd android
-./gradlew assembleRelease
-```
-
-#### Android Build Troubleshooting
-
-If you encounter build issues, try:
-
-```bash
-# Clean and rebuild
-cd android
-./gradlew clean
-./gradlew build
-
-# Update Capacitor
-npm install @capacitor/core@latest @capacitor/cli@latest
-npx cap sync
-```
-
-#### Build Configuration Files
-
-- **Web Build**: Configured in `vite.config.ts`
-- **Android Build**: Configured in `android/app/build.gradle`
-- **Capacitor Config**: `capacitor.config.ts`
-
-For detailed Android setup instructions, see `ANDROID_BUILD_GUIDE.md`.
-
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-
-### Project Structure
+## Estructura
 
 ```
 src/
-├── components/          # React components
-├── contexts/           # React contexts (Auth, etc.)
-├── hooks/              # Custom hooks (dark mode, etc.)
-├── App.tsx             # Main application component
-├── main.tsx            # Application entry point
-└── vite-env.d.ts       # TypeScript environment definitions
+├── app/          App, router, providers, tema, rutas protegidas
+├── layouts/      Layout principal (sidebar en PC, barra inferior en celular)
+├── pages/        Una página por sección
+├── features/     Lógica por dominio (auth, products, finance, settings)
+├── components/   Componentes compartidos; ui/ = kit base
+├── hooks/        useTheme, useMediaQuery, useDebounce
+└── lib/          supabase, formato (ARS / es-AR), utilidades
 ```
 
-## Security Notes
+## Estado
 
-- Never commit your `.env` file to version control
-- Keep your API keys secure and rotate them regularly
-- The `.env` file is already included in `.gitignore`
-- Use environment-specific configurations for different deployments
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License. 
+- [x] Fase 0 — Esqueleto, navegación y kit de interfaz
+- [ ] Fase 1 — Base de datos y Ajustes (categorías, cuentas, preferencias)
+- [ ] Fase 2 — Finanzas
+- [ ] Fase 3 — Conexión de solo lectura con Google Sheets
+- [ ] Fase 4 — Productos y stock físico
+- [ ] Fase 5 — Inicio y pulido

@@ -1,38 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'your-supabase-url'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-supabase-anon-key'
+const url = import.meta.env.VITE_SUPABASE_URL
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+/** false si faltan las variables de entorno (se muestra un aviso en el login). */
+export const isSupabaseConfigured = Boolean(url && anonKey && /^https?:\/\//.test(url))
 
-// Auth helper functions
-export const signUp = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
-  return { data, error }
-}
+/**
+ * Sesión local de desarrollo: solo con `npm run dev` y sin Supabase configurado,
+ * para poder recorrer la interfaz. Nunca está disponible en el build de producción.
+ */
+export const canUseDevSession = import.meta.env.DEV && !isSupabaseConfigured
 
-export const signIn = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-  return { data, error }
-}
-
-export const signOut = async () => {
-  const { error } = await supabase.auth.signOut()
-  return { error }
-}
-
-export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  return { user, error }
-}
-
-export const resetPassword = async (email: string) => {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email)
-  return { data, error }
-} 
+// Con valores de relleno el cliente se crea sin lanzar errores; no se usa si no está configurado.
+export const supabase = createClient(
+  isSupabaseConfigured ? url! : 'http://localhost:54321',
+  isSupabaseConfigured ? anonKey! : 'no-configurado',
+)
